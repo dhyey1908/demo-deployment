@@ -94,7 +94,7 @@
       "get": {
         "operationId": "getSimple",
         "x-lambda-name": "demo_simple_api",
-        "x-layer-names": ["demo_common", "demo_utils"],
+        "x-layer-names": ["demo_common", "demo_utils","demo_helpers"],
         "responses": {
           "200": {
             "description": "Simple GET response"
