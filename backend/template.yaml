@@ -4,7 +4,7 @@ Description: Swagger-driven demo backend generated from api_gateway/api-gateway-
 
 Globals:
   Function:
-    Runtime: nodejs18.x
+    Runtime: nodejs22.x
     Timeout: 10
     MemorySize: 128
     Architectures:
@@ -39,7 +39,7 @@ Resources:
       Description: Shared utilities for demo Lambda functions
       ContentUri: layers/demo_common/
       CompatibleRuntimes:
-        - nodejs18.x
+        - nodejs22.x
       RetentionPolicy: Retain
 
   DemoApi:

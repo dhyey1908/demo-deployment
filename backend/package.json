@@ -9,6 +9,6 @@
     "start-local": "npm run generate-template && sam local start-api --template template.yaml --parameter-overrides EnableLocalAdapter=true StageName=dev"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

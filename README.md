@@ -32,7 +32,7 @@ This repository is a starter template for a Swagger-driven AWS SAM backend that 
 
 ## Step-by-step setup
 
-1. Install prerequisites: Node.js 18+, AWS SAM CLI, Docker, Git, and an AWS account.
+1. Install prerequisites: Node.js 22+, AWS SAM CLI, Docker, Git, and an AWS account.
 2. Create an empty GitHub repository.
 3. Copy this project into that repository.
 4. From `backend/`, run `npm install`.
