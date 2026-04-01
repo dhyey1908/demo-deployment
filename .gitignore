@@ -1,3 +1,4 @@
 backend/.aws-sam/
+backend/generated_lambda_functions/
 backend/node_modules/
 .DS_Store

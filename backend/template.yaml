@@ -54,8 +54,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub demo_auth_api-${StageName}
-      CodeUri: lambda_functions/
-      Handler: demo_auth_api.handler
+      CodeUri: generated_lambda_functions/demo_auth_api/
+      Handler: index.handler
       Layers:
         - !Ref DemoCommonLayer
       Events:
@@ -76,8 +76,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub demo_dashboard_api-${StageName}
-      CodeUri: lambda_functions/
-      Handler: demo_dashboard_api.handler
+      CodeUri: generated_lambda_functions/demo_dashboard_api/
+      Handler: index.handler
       Layers:
         - !Ref DemoCommonLayer
       Events:
@@ -98,8 +98,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub demo_employee_api-${StageName}
-      CodeUri: lambda_functions/
-      Handler: demo_employee_api.handler
+      CodeUri: generated_lambda_functions/demo_employee_api/
+      Handler: index.handler
       Layers:
         - !Ref DemoCommonLayer
       Events:

@@ -4,6 +4,10 @@ const path = require("path");
 const rootDir = path.resolve(__dirname, "..");
 const swaggerPath = path.join(rootDir, "api_gateway", "api-gateway-export.json");
 const outputPath = path.join(rootDir, "template.yaml");
+const lambdaSourceDir = path.join(rootDir, "lambda_functions");
+const generatedLambdaDir = path.join(rootDir, "generated_lambda_functions");
+const sharedLoaderSourcePath = path.join(lambdaSourceDir, "load-shared.cjs");
+const layerSharedSourcePath = path.join(rootDir, "layers", "demo_common", "nodejs", "demo-shared.cjs");
 
 const swagger = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
 
@@ -34,6 +38,27 @@ const toLogicalId = (name) =>
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join("");
+
+const ensureIsolatedLambdaSources = () => {
+  fs.rmSync(generatedLambdaDir, { recursive: true, force: true });
+  fs.mkdirSync(generatedLambdaDir, { recursive: true });
+
+  for (const lambdaName of Object.keys(lambdaGroups)) {
+    const sourceHandlerPath = path.join(lambdaSourceDir, `${lambdaName}.cjs`);
+
+    if (!fs.existsSync(sourceHandlerPath)) {
+      throw new Error(`Missing Lambda source file: ${path.relative(rootDir, sourceHandlerPath)}`);
+    }
+
+    const targetDir = path.join(generatedLambdaDir, lambdaName);
+    fs.mkdirSync(targetDir, { recursive: true });
+    fs.copyFileSync(sourceHandlerPath, path.join(targetDir, "index.cjs"));
+    fs.copyFileSync(sharedLoaderSourcePath, path.join(targetDir, "load-shared.cjs"));
+    fs.copyFileSync(layerSharedSourcePath, path.join(targetDir, "demo-shared.cjs"));
+  }
+};
+
+ensureIsolatedLambdaSources();
 
 const lines = [
   "AWSTemplateFormatVersion: '2010-09-09'",
@@ -97,8 +122,8 @@ for (const [lambdaName, routes] of Object.entries(lambdaGroups)) {
   lines.push("    Type: AWS::Serverless::Function");
   lines.push("    Properties:");
   lines.push(`      FunctionName: !Sub ${lambdaName}-\${StageName}`);
-  lines.push(`      CodeUri: lambda_functions/`);
-  lines.push(`      Handler: ${lambdaName}.handler`);
+  lines.push(`      CodeUri: generated_lambda_functions/${lambdaName}/`);
+  lines.push("      Handler: index.handler");
   lines.push("      Layers:");
   lines.push("        - !Ref DemoCommonLayer");
   lines.push("      Events:");
