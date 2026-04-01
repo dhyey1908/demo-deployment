@@ -41,7 +41,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: arn:aws:iam::311376802787:role/github-demo-deployment
           role-session-name: github-actions-sam-deploy
 
       - name: Build SAM application
@@ -54,7 +54,7 @@ jobs:
           sam deploy
           --stack-name serverless-demo
           --region "$AWS_REGION"
-          --s3-bucket "${{ secrets.SAM_ARTIFACT_BUCKET }}"
+          --s3-bucket sam-artifacts-serverless-demo-123
           --capabilities CAPABILITY_IAM
           --no-confirm-changeset
           --no-fail-on-empty-changeset
