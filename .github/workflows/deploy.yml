@@ -54,7 +54,7 @@ jobs:
           sam deploy
           --stack-name serverless-demo
           --region "$AWS_REGION"
-          --s3-bucket sam-artifacts-serverless-demo-123
+          --s3-bucket sam-artifacts-serverless-demo-1234
           --capabilities CAPABILITY_IAM
           --no-confirm-changeset
           --no-fail-on-empty-changeset
