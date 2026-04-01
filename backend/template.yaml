@@ -133,6 +133,7 @@ Resources:
           REPORT_REGION: "us-east-1"
       Layers:
         - !Ref DemoCommonLayer
+        - !Ref DemoUtilsLayer
       Events:
         ApiEvent1:
           Type: Api
