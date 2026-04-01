@@ -147,6 +147,9 @@ Resources:
       FunctionName: !Sub demo_simple_api_${StageName}
       CodeUri: generated_lambda_functions/demo_simple_api/
       Handler: index.handler
+      Layers:
+        - !Ref DemoCommonLayer
+        - !Ref DemoUtilsLayer
       Events:
         ApiEvent1:
           Type: Api
