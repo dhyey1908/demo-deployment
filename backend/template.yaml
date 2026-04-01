@@ -32,16 +32,6 @@ Conditions:
   CreateLocalAdapter: !Equals [!Ref EnableLocalAdapter, 'true']
 
 Resources:
-  DemoCommonLayer:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: !Sub demo-common-layer-${StageName}
-      Description: Shared utilities for demo Lambda functions
-      ContentUri: layers/demo_common/
-      CompatibleRuntimes:
-        - nodejs22.x
-      RetentionPolicy: Retain
-
   DemoApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -50,14 +40,22 @@ Resources:
       EndpointConfiguration: REGIONAL
       TracingEnabled: true
 
+  DemoCommonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub demo_common-${StageName}
+      Description: Lambda layer for demo_common
+      ContentUri: layers/demo_common/
+      CompatibleRuntimes:
+        - nodejs22.x
+      RetentionPolicy: Retain
+
   DemoAuthApi:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub demo_auth_api-${StageName}
       CodeUri: generated_lambda_functions/demo_auth_api/
       Handler: index.handler
-      Layers:
-        - !Ref DemoCommonLayer
       Events:
         ApiEvent1:
           Type: Api
@@ -78,8 +76,6 @@ Resources:
       FunctionName: !Sub demo_dashboard_api-${StageName}
       CodeUri: generated_lambda_functions/demo_dashboard_api/
       Handler: index.handler
-      Layers:
-        - !Ref DemoCommonLayer
       Events:
         ApiEvent1:
           Type: Api

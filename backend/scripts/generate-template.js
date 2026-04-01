@@ -6,8 +6,8 @@ const swaggerPath = path.join(rootDir, "api_gateway", "api-gateway-export.json")
 const outputPath = path.join(rootDir, "template.yaml");
 const lambdaSourceDir = path.join(rootDir, "lambda_functions");
 const generatedLambdaDir = path.join(rootDir, "generated_lambda_functions");
+const layersDir = path.join(rootDir, "layers");
 const sharedLoaderSourcePath = path.join(lambdaSourceDir, "load-shared.cjs");
-const layerSharedSourcePath = path.join(rootDir, "layers", "demo_common", "nodejs", "demo-shared.cjs");
 
 const swagger = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
 
@@ -22,10 +22,24 @@ for (const [routePath, methods] of Object.entries(swagger.paths || {})) {
     }
 
     if (!lambdaGroups[lambdaName]) {
-      lambdaGroups[lambdaName] = [];
+      lambdaGroups[lambdaName] = {
+        routes: [],
+        layerName: null
+      };
     }
 
-    lambdaGroups[lambdaName].push({
+    const layerName = operation["x-layer-name"] || null;
+    const lambdaConfig = lambdaGroups[lambdaName];
+
+    if (lambdaConfig.layerName && layerName && lambdaConfig.layerName !== layerName) {
+      throw new Error(`Conflicting x-layer-name values for Lambda ${lambdaName}`);
+    }
+
+    if (layerName) {
+      lambdaConfig.layerName = layerName;
+    }
+
+    lambdaConfig.routes.push({
       method: method.toUpperCase(),
       path: routePath
     });
@@ -39,11 +53,37 @@ const toLogicalId = (name) =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join("");
 
+const getAvailableLayers = () => {
+  if (!fs.existsSync(layersDir)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(layersDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+};
+
+const availableLayers = getAvailableLayers();
+
+const getLayerResourceLogicalId = (layerName) => `${toLogicalId(layerName)}Layer`;
+
+const getLayerResourceRef = (layerName) => {
+  if (!availableLayers.includes(layerName)) {
+    throw new Error(
+      `Layer "${layerName}" does not exist. Create backend/layers/${layerName}/nodejs first.`
+    );
+  }
+
+  return getLayerResourceLogicalId(layerName);
+};
+
 const ensureIsolatedLambdaSources = () => {
   fs.rmSync(generatedLambdaDir, { recursive: true, force: true });
   fs.mkdirSync(generatedLambdaDir, { recursive: true });
 
-  for (const lambdaName of Object.keys(lambdaGroups)) {
+  for (const [lambdaName, lambdaConfig] of Object.entries(lambdaGroups)) {
     const sourceHandlerPath = path.join(lambdaSourceDir, `${lambdaName}.cjs`);
 
     if (!fs.existsSync(sourceHandlerPath)) {
@@ -54,7 +94,10 @@ const ensureIsolatedLambdaSources = () => {
     fs.mkdirSync(targetDir, { recursive: true });
     fs.copyFileSync(sourceHandlerPath, path.join(targetDir, "index.cjs"));
     fs.copyFileSync(sharedLoaderSourcePath, path.join(targetDir, "load-shared.cjs"));
-    fs.copyFileSync(layerSharedSourcePath, path.join(targetDir, "demo-shared.cjs"));
+
+    if (lambdaConfig.layerName) {
+      getLayerResourceRef(lambdaConfig.layerName);
+    }
   }
 };
 
@@ -95,16 +138,6 @@ const lines = [
   "  CreateLocalAdapter: !Equals [!Ref EnableLocalAdapter, 'true']",
   "",
   "Resources:",
-  "  DemoCommonLayer:",
-  "    Type: AWS::Serverless::LayerVersion",
-  "    Properties:",
-  "      LayerName: !Sub demo-common-layer-${StageName}",
-  "      Description: Shared utilities for demo Lambda functions",
-  "      ContentUri: layers/demo_common/",
-  "      CompatibleRuntimes:",
-  "        - nodejs22.x",
-  "      RetentionPolicy: Retain",
-  "",
   "  DemoApi:",
   "    Type: AWS::Serverless::Api",
   "    Properties:",
@@ -115,8 +148,24 @@ const lines = [
   ""
 ];
 
-for (const [lambdaName, routes] of Object.entries(lambdaGroups)) {
+for (const layerName of availableLayers) {
+  const logicalId = getLayerResourceLogicalId(layerName);
+
+  lines.push(`  ${logicalId}:`);
+  lines.push("    Type: AWS::Serverless::LayerVersion");
+  lines.push("    Properties:");
+  lines.push(`      LayerName: !Sub ${layerName}-\${StageName}`);
+  lines.push(`      Description: Lambda layer for ${layerName}`);
+  lines.push(`      ContentUri: layers/${layerName}/`);
+  lines.push("      CompatibleRuntimes:");
+  lines.push("        - nodejs22.x");
+  lines.push("      RetentionPolicy: Retain");
+  lines.push("");
+}
+
+for (const [lambdaName, lambdaConfig] of Object.entries(lambdaGroups)) {
   const logicalId = toLogicalId(lambdaName);
+  const layerRef = lambdaConfig.layerName ? getLayerResourceRef(lambdaConfig.layerName) : null;
 
   lines.push(`  ${logicalId}:`);
   lines.push("    Type: AWS::Serverless::Function");
@@ -124,11 +173,13 @@ for (const [lambdaName, routes] of Object.entries(lambdaGroups)) {
   lines.push(`      FunctionName: !Sub ${lambdaName}-\${StageName}`);
   lines.push(`      CodeUri: generated_lambda_functions/${lambdaName}/`);
   lines.push("      Handler: index.handler");
-  lines.push("      Layers:");
-  lines.push("        - !Ref DemoCommonLayer");
+  if (layerRef) {
+    lines.push("      Layers:");
+    lines.push(`        - !Ref ${layerRef}`);
+  }
   lines.push("      Events:");
 
-  routes.forEach((route, index) => {
+  lambdaConfig.routes.forEach((route, index) => {
     lines.push(`        ApiEvent${index + 1}:`);
     lines.push("          Type: Api");
     lines.push("          Properties:");
