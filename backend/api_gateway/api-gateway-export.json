@@ -54,7 +54,7 @@
       "get": {
         "operationId": "listEmployees",
         "x-lambda-name": "demo_employee_api",
-        "x-layer-name": "demo_common",
+        "x-layer-names": ["demo_common"],
         "responses": {
           "200": {
             "description": "Employee list response"
@@ -66,7 +66,7 @@
       "post": {
         "operationId": "addEmployee",
         "x-lambda-name": "demo_employee_api",
-        "x-layer-name": "demo_common",
+        "x-layer-names": ["demo_common"],
         "responses": {
           "200": {
             "description": "Employee created response"
@@ -78,7 +78,7 @@
       "post": {
         "operationId": "getReport",
         "x-lambda-name": "demo_reports_api",
-        "x-layer-name": "demo_common",
+        "x-layer-names": ["demo_common"],
         "x-environment": {
           "REPORT_SOURCE": "internal",
           "REPORT_REGION": "us-east-1"
@@ -94,7 +94,7 @@
       "get": {
         "operationId": "getSimple",
         "x-lambda-name": "demo_simple_api",
-        "x-layer-name": ["demo_common", "demo_utils"],
+        "x-layer-names": ["demo_common", "demo_utils"],
         "responses": {
           "200": {
             "description": "Simple GET response"

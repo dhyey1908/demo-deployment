@@ -57,9 +57,7 @@ for (const [routePath, methods] of Object.entries(swagger.paths || {})) {
       };
     }
 
-    const layerNames = normalizeLayerNames(
-      operation["x-layer-names"] || operation["x-layer-name"] || null
-    );
+    const layerNames = normalizeLayerNames(operation["x-layer-names"] || null);
     const environmentVariables = normalizeEnvironmentVariables(
       operation["x-environment"] || null
     );
@@ -102,9 +100,7 @@ const standaloneLambdas = fs.existsSync(standaloneLambdasPath)
 
 for (const standaloneLambda of standaloneLambdas) {
   const { name: lambdaName } = standaloneLambda;
-  const layerNames = normalizeLayerNames(
-    standaloneLambda.layerNames || standaloneLambda.layerName || null
-  );
+  const layerNames = normalizeLayerNames(standaloneLambda.layerNames || null);
 
   if (!lambdaName) {
     throw new Error("Each standalone lambda must define a name.");
