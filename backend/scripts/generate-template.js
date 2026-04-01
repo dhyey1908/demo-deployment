@@ -29,6 +29,18 @@ const normalizeLayerNames = (layerValue) => {
 const sameLayerNames = (left, right) =>
   left.length === right.length && left.every((layerName, index) => layerName === right[index]);
 
+const normalizeEnvironmentVariables = (environmentVariables) => {
+  if (!environmentVariables) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(environmentVariables).filter(([, value]) => value !== undefined && value !== null)
+  );
+};
+
+const sameEnvironmentVariables = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+
 for (const [routePath, methods] of Object.entries(swagger.paths || {})) {
   for (const [method, operation] of Object.entries(methods || {})) {
     const lambdaName = operation["x-lambda-name"];
@@ -40,12 +52,16 @@ for (const [routePath, methods] of Object.entries(swagger.paths || {})) {
     if (!lambdaGroups[lambdaName]) {
       lambdaGroups[lambdaName] = {
         routes: [],
-        layerNames: []
+        layerNames: [],
+        environmentVariables: {}
       };
     }
 
     const layerNames = normalizeLayerNames(
       operation["x-layer-names"] || operation["x-layer-name"] || null
+    );
+    const environmentVariables = normalizeEnvironmentVariables(
+      operation["x-environment"] || null
     );
     const lambdaConfig = lambdaGroups[lambdaName];
 
@@ -59,6 +75,18 @@ for (const [routePath, methods] of Object.entries(swagger.paths || {})) {
 
     if (layerNames.length > 0) {
       lambdaConfig.layerNames = layerNames;
+    }
+
+    if (
+      Object.keys(lambdaConfig.environmentVariables).length > 0 &&
+      Object.keys(environmentVariables).length > 0 &&
+      !sameEnvironmentVariables(lambdaConfig.environmentVariables, environmentVariables)
+    ) {
+      throw new Error(`Conflicting environment configuration values for Lambda ${lambdaName}`);
+    }
+
+    if (Object.keys(environmentVariables).length > 0) {
+      lambdaConfig.environmentVariables = environmentVariables;
     }
 
     lambdaConfig.routes.push({
@@ -88,7 +116,8 @@ for (const standaloneLambda of standaloneLambdas) {
 
   lambdaGroups[lambdaName] = {
     routes: [],
-    layerNames
+    layerNames,
+    environmentVariables: normalizeEnvironmentVariables(standaloneLambda.environmentVariables || null)
   };
 }
 
@@ -218,6 +247,13 @@ for (const [lambdaName, lambdaConfig] of Object.entries(lambdaGroups)) {
   lines.push(`      FunctionName: !Sub ${lambdaName}_\${StageName}`);
   lines.push(`      CodeUri: generated_lambda_functions/${lambdaName}/`);
   lines.push("      Handler: index.handler");
+  if (Object.keys(lambdaConfig.environmentVariables).length > 0) {
+    lines.push("      Environment:");
+    lines.push("        Variables:");
+    Object.entries(lambdaConfig.environmentVariables).forEach(([key, value]) => {
+      lines.push(`          ${key}: ${JSON.stringify(String(value))}`);
+    });
+  }
   if (layerRefs.length > 0) {
     lines.push("      Layers:");
     layerRefs.forEach((layerRef) => {

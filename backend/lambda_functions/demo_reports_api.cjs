@@ -7,11 +7,15 @@ exports.handler = async (event) => {
   return jsonResponse(200, {
     success: true,
     routeKey,
-    message: "demo_reports_api is ready. Add a route mapping in api-gateway-export.json to use it.",
+    message: "demo_reports_api is ready.",
     data: {
       method,
       path,
-      requestBody
+      requestBody,
+      environment: {
+        reportSource: process.env.REPORT_SOURCE || null,
+        reportRegion: process.env.REPORT_REGION || null
+      }
     }
   });
 };
