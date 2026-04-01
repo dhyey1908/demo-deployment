@@ -138,7 +138,7 @@ Tighten this before using it in a real environment.
 
 - Push to `main`
 - GitHub Actions generates `template.yaml`, builds with SAM, and deploys the `serverless-demo` stack
-- The workflow uses `StageName=dev` and `EnableLocalAdapter=false`
+- The workflow uses `StageName=stag` and `EnableLocalAdapter=false`
 
 ## Notes
 

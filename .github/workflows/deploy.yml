@@ -58,4 +58,4 @@ jobs:
           --capabilities CAPABILITY_IAM
           --no-confirm-changeset
           --no-fail-on-empty-changeset
-          --parameter-overrides StageName=dev EnableLocalAdapter=false
+          --parameter-overrides StageName=stag EnableLocalAdapter=false

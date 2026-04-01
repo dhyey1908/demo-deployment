@@ -122,11 +122,10 @@ const lines = [
   "Parameters:",
   "  StageName:",
   "    Type: String",
-  "    Default: dev",
+  "    Default: stag",
   "    AllowedValues:",
-  "      - dev",
-  "      - staging",
-  "      - production",
+  "      - stag",
+  "      - prod",
   "  EnableLocalAdapter:",
   "    Type: String",
   "    Default: false",
@@ -170,7 +169,7 @@ for (const [lambdaName, lambdaConfig] of Object.entries(lambdaGroups)) {
   lines.push(`  ${logicalId}:`);
   lines.push("    Type: AWS::Serverless::Function");
   lines.push("    Properties:");
-  lines.push(`      FunctionName: !Sub ${lambdaName}-\${StageName}`);
+  lines.push(`      FunctionName: !Sub ${lambdaName}_\${StageName}`);
   lines.push(`      CodeUri: generated_lambda_functions/${lambdaName}/`);
   lines.push("      Handler: index.handler");
   if (layerRef) {
@@ -195,7 +194,7 @@ lines.push("  LocalApiAdapter:");
 lines.push("    Type: AWS::Serverless::Function");
 lines.push("    Condition: CreateLocalAdapter");
 lines.push("    Properties:");
-lines.push("      FunctionName: !Sub demo-local-adapter-${StageName}");
+lines.push("      FunctionName: !Sub demo_local_adapter_${StageName}");
 lines.push("      CodeUri: local/");
 lines.push("      Handler: local_lambda_adapter.handler");
 lines.push("      Events:");

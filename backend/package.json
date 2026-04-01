@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "generate-template": "node scripts/generate-template.js",
-    "start-local": "npm run generate-template && sam local start-api --template template.yaml --parameter-overrides EnableLocalAdapter=true StageName=dev"
+    "start-local": "npm run generate-template && sam local start-api --template template.yaml --parameter-overrides EnableLocalAdapter=true StageName=stag"
   },
   "engines": {
     "node": ">=22"

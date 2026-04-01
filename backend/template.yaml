@@ -16,11 +16,10 @@ Globals:
 Parameters:
   StageName:
     Type: String
-    Default: dev
+    Default: stag
     AllowedValues:
-      - dev
-      - staging
-      - production
+      - stag
+      - prod
   EnableLocalAdapter:
     Type: String
     Default: false
@@ -53,7 +52,7 @@ Resources:
   DemoAuthApi:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub demo_auth_api-${StageName}
+      FunctionName: !Sub demo_auth_api_${StageName}
       CodeUri: generated_lambda_functions/demo_auth_api/
       Handler: index.handler
       Events:
@@ -73,7 +72,7 @@ Resources:
   DemoDashboardApi:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub demo_dashboard_api-${StageName}
+      FunctionName: !Sub demo_dashboard_api_${StageName}
       CodeUri: generated_lambda_functions/demo_dashboard_api/
       Handler: index.handler
       Events:
@@ -93,7 +92,7 @@ Resources:
   DemoEmployeeApi:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub demo_employee_api-${StageName}
+      FunctionName: !Sub demo_employee_api_${StageName}
       CodeUri: generated_lambda_functions/demo_employee_api/
       Handler: index.handler
       Layers:
@@ -112,11 +111,27 @@ Resources:
             Path: /employee/add
             Method: POST
 
+  DemoReportsApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub demo_reports_api_${StageName}
+      CodeUri: generated_lambda_functions/demo_reports_api/
+      Handler: index.handler
+      Layers:
+        - !Ref DemoCommonLayer
+      Events:
+        ApiEvent1:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /report
+            Method: POST
+
   LocalApiAdapter:
     Type: AWS::Serverless::Function
     Condition: CreateLocalAdapter
     Properties:
-      FunctionName: !Sub demo-local-adapter-${StageName}
+      FunctionName: !Sub demo_local_adapter_${StageName}
       CodeUri: local/
       Handler: local_lambda_adapter.handler
       Events:
