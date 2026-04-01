@@ -73,6 +73,18 @@
           }
         }
       }
+    },
+    "/report": {
+      "post": {
+        "operationId": "getReport",
+        "x-lambda-name": "demo_reports_api",
+        "x-layer-name": "demo_common",
+        "responses": {
+          "200": {
+            "description": "Report response"
+          }
+        }
+      }
     }
   }
 }
