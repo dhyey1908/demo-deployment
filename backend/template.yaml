@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Swagger-driven demo backend generated from api_gateway/api-gateway-export.json
+
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 10
+    MemorySize: 128
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        STAGE_NAME: !Ref StageName
+
+Parameters:
+  StageName:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - production
+  EnableLocalAdapter:
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+Conditions:
+  CreateLocalAdapter: !Equals [!Ref EnableLocalAdapter, 'true']
+
+Resources:
+  DemoCommonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub demo-common-layer-${StageName}
+      Description: Shared utilities for demo Lambda functions
+      ContentUri: layers/demo_common/
+      CompatibleRuntimes:
+        - nodejs18.x
+      RetentionPolicy: Retain
+
+  DemoApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub serverless-demo-api-${StageName}
+      StageName: !Ref StageName
+      EndpointConfiguration: REGIONAL
+      TracingEnabled: true
+
+  DemoAuthApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub demo_auth_api-${StageName}
+      CodeUri: lambda_functions/
+      Handler: demo_auth_api.handler
+      Layers:
+        - !Ref DemoCommonLayer
+      Events:
+        ApiEvent1:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /login
+            Method: POST
+        ApiEvent2:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /logout
+            Method: POST
+
+  DemoDashboardApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub demo_dashboard_api-${StageName}
+      CodeUri: lambda_functions/
+      Handler: demo_dashboard_api.handler
+      Layers:
+        - !Ref DemoCommonLayer
+      Events:
+        ApiEvent1:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /dashboard/get_summary
+            Method: GET
+        ApiEvent2:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /dashboard/get_today_attendance
+            Method: GET
+
+  DemoEmployeeApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub demo_employee_api-${StageName}
+      CodeUri: lambda_functions/
+      Handler: demo_employee_api.handler
+      Layers:
+        - !Ref DemoCommonLayer
+      Events:
+        ApiEvent1:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /employee/list
+            Method: GET
+        ApiEvent2:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /employee/add
+            Method: POST
+
+  LocalApiAdapter:
+    Type: AWS::Serverless::Function
+    Condition: CreateLocalAdapter
+    Properties:
+      FunctionName: !Sub demo-local-adapter-${StageName}
+      CodeUri: local/
+      Handler: local_lambda_adapter.handler
+      Events:
+        CatchAllProxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiBaseUrl:
+    Description: API Gateway base URL
+    Value: !Sub https://${DemoApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}

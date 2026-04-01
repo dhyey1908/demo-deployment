@@ -1,0 +1,76 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Serverless Demo API",
+    "version": "1.0.0",
+    "description": "Swagger source of truth for the demo AWS SAM backend."
+  },
+  "paths": {
+    "/login": {
+      "post": {
+        "operationId": "login",
+        "x-lambda-name": "demo_auth_api",
+        "responses": {
+          "200": {
+            "description": "Successful login response"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "operationId": "logout",
+        "x-lambda-name": "demo_auth_api",
+        "responses": {
+          "200": {
+            "description": "Successful logout response"
+          }
+        }
+      }
+    },
+    "/dashboard/get_summary": {
+      "get": {
+        "operationId": "getDashboardSummary",
+        "x-lambda-name": "demo_dashboard_api",
+        "responses": {
+          "200": {
+            "description": "Dashboard summary response"
+          }
+        }
+      }
+    },
+    "/dashboard/get_today_attendance": {
+      "get": {
+        "operationId": "getTodayAttendance",
+        "x-lambda-name": "demo_dashboard_api",
+        "responses": {
+          "200": {
+            "description": "Today's attendance response"
+          }
+        }
+      }
+    },
+    "/employee/list": {
+      "get": {
+        "operationId": "listEmployees",
+        "x-lambda-name": "demo_employee_api",
+        "responses": {
+          "200": {
+            "description": "Employee list response"
+          }
+        }
+      }
+    },
+    "/employee/add": {
+      "post": {
+        "operationId": "addEmployee",
+        "x-lambda-name": "demo_employee_api",
+        "responses": {
+          "200": {
+            "description": "Employee created response"
+          }
+        }
+      }
+    }
+  }
+}

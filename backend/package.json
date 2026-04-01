@@ -1,0 +1,14 @@
+{
+  "name": "sam-serverless-demo-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo AWS SAM backend with Swagger-driven Lambda routing and GitHub Actions CI/CD.",
+  "type": "commonjs",
+  "scripts": {
+    "generate-template": "node scripts/generate-template.js",
+    "start-local": "npm run generate-template && sam local start-api --template template.yaml --parameter-overrides EnableLocalAdapter=true StageName=dev"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

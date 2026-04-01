@@ -1,0 +1,8 @@
+{
+  "POST /login": "demo_auth_api",
+  "POST /logout": "demo_auth_api",
+  "GET /dashboard/get_summary": "demo_dashboard_api",
+  "GET /dashboard/get_today_attendance": "demo_dashboard_api",
+  "GET /employee/list": "demo_employee_api",
+  "POST /employee/add": "demo_employee_api"
+}
