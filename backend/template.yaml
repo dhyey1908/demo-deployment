@@ -127,6 +127,10 @@ Resources:
       FunctionName: !Sub demo_reports_api_${StageName}
       CodeUri: generated_lambda_functions/demo_reports_api/
       Handler: index.handler
+      Environment:
+        Variables:
+          REPORT_SOURCE: "internal"
+          REPORT_REGION: "us-east-1"
       Layers:
         - !Ref DemoCommonLayer
       Events:
@@ -136,6 +140,20 @@ Resources:
             RestApiId: !Ref DemoApi
             Path: /report
             Method: POST
+
+  DemoSimpleApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub demo_simple_api_${StageName}
+      CodeUri: generated_lambda_functions/demo_simple_api/
+      Handler: index.handler
+      Events:
+        ApiEvent1:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /simple/get
+            Method: GET
 
   DemoBackgroundJob:
     Type: AWS::Serverless::Function
