@@ -5,6 +5,7 @@ exports.handler = async (event) => {
   const parsedBody = parseBody(event);
 
   if (method === "GET" && path === "/employee/list") {
+    console.log("Received request for employee list");
     return jsonResponse(200, {
       success: true,
       routeKey,
