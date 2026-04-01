@@ -8,10 +8,26 @@ const lambdaSourceDir = path.join(rootDir, "lambda_functions");
 const generatedLambdaDir = path.join(rootDir, "generated_lambda_functions");
 const layersDir = path.join(rootDir, "layers");
 const sharedLoaderSourcePath = path.join(lambdaSourceDir, "load-shared.cjs");
+const standaloneLambdasPath = path.join(lambdaSourceDir, "standalone-lambdas.json");
 
 const swagger = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
 
 const lambdaGroups = {};
+
+const normalizeLayerNames = (layerValue) => {
+  if (!layerValue) {
+    return [];
+  }
+
+  if (Array.isArray(layerValue)) {
+    return [...new Set(layerValue.filter(Boolean))];
+  }
+
+  return [layerValue];
+};
+
+const sameLayerNames = (left, right) =>
+  left.length === right.length && left.every((layerName, index) => layerName === right[index]);
 
 for (const [routePath, methods] of Object.entries(swagger.paths || {})) {
   for (const [method, operation] of Object.entries(methods || {})) {
@@ -24,19 +40,25 @@ for (const [routePath, methods] of Object.entries(swagger.paths || {})) {
     if (!lambdaGroups[lambdaName]) {
       lambdaGroups[lambdaName] = {
         routes: [],
-        layerName: null
+        layerNames: []
       };
     }
 
-    const layerName = operation["x-layer-name"] || null;
+    const layerNames = normalizeLayerNames(
+      operation["x-layer-names"] || operation["x-layer-name"] || null
+    );
     const lambdaConfig = lambdaGroups[lambdaName];
 
-    if (lambdaConfig.layerName && layerName && lambdaConfig.layerName !== layerName) {
-      throw new Error(`Conflicting x-layer-name values for Lambda ${lambdaName}`);
+    if (
+      lambdaConfig.layerNames.length > 0 &&
+      layerNames.length > 0 &&
+      !sameLayerNames(lambdaConfig.layerNames, layerNames)
+    ) {
+      throw new Error(`Conflicting layer configuration values for Lambda ${lambdaName}`);
     }
 
-    if (layerName) {
-      lambdaConfig.layerName = layerName;
+    if (layerNames.length > 0) {
+      lambdaConfig.layerNames = layerNames;
     }
 
     lambdaConfig.routes.push({
@@ -44,6 +66,30 @@ for (const [routePath, methods] of Object.entries(swagger.paths || {})) {
       path: routePath
     });
   }
+}
+
+const standaloneLambdas = fs.existsSync(standaloneLambdasPath)
+  ? JSON.parse(fs.readFileSync(standaloneLambdasPath, "utf8"))
+  : [];
+
+for (const standaloneLambda of standaloneLambdas) {
+  const { name: lambdaName } = standaloneLambda;
+  const layerNames = normalizeLayerNames(
+    standaloneLambda.layerNames || standaloneLambda.layerName || null
+  );
+
+  if (!lambdaName) {
+    throw new Error("Each standalone lambda must define a name.");
+  }
+
+  if (lambdaGroups[lambdaName]) {
+    throw new Error(`Lambda ${lambdaName} is already defined in api-gateway-export.json.`);
+  }
+
+  lambdaGroups[lambdaName] = {
+    routes: [],
+    layerNames
+  };
 }
 
 const toLogicalId = (name) =>
@@ -95,8 +141,8 @@ const ensureIsolatedLambdaSources = () => {
     fs.copyFileSync(sourceHandlerPath, path.join(targetDir, "index.cjs"));
     fs.copyFileSync(sharedLoaderSourcePath, path.join(targetDir, "load-shared.cjs"));
 
-    if (lambdaConfig.layerName) {
-      getLayerResourceRef(lambdaConfig.layerName);
+    for (const layerName of lambdaConfig.layerNames) {
+      getLayerResourceRef(layerName);
     }
   }
 };
@@ -164,7 +210,7 @@ for (const layerName of availableLayers) {
 
 for (const [lambdaName, lambdaConfig] of Object.entries(lambdaGroups)) {
   const logicalId = toLogicalId(lambdaName);
-  const layerRef = lambdaConfig.layerName ? getLayerResourceRef(lambdaConfig.layerName) : null;
+  const layerRefs = lambdaConfig.layerNames.map((layerName) => getLayerResourceRef(layerName));
 
   lines.push(`  ${logicalId}:`);
   lines.push("    Type: AWS::Serverless::Function");
@@ -172,20 +218,24 @@ for (const [lambdaName, lambdaConfig] of Object.entries(lambdaGroups)) {
   lines.push(`      FunctionName: !Sub ${lambdaName}_\${StageName}`);
   lines.push(`      CodeUri: generated_lambda_functions/${lambdaName}/`);
   lines.push("      Handler: index.handler");
-  if (layerRef) {
+  if (layerRefs.length > 0) {
     lines.push("      Layers:");
-    lines.push(`        - !Ref ${layerRef}`);
+    layerRefs.forEach((layerRef) => {
+      lines.push(`        - !Ref ${layerRef}`);
+    });
   }
-  lines.push("      Events:");
+  if (lambdaConfig.routes.length > 0) {
+    lines.push("      Events:");
 
-  lambdaConfig.routes.forEach((route, index) => {
-    lines.push(`        ApiEvent${index + 1}:`);
-    lines.push("          Type: Api");
-    lines.push("          Properties:");
-    lines.push("            RestApiId: !Ref DemoApi");
-    lines.push(`            Path: ${route.path}`);
-    lines.push(`            Method: ${route.method}`);
-  });
+    lambdaConfig.routes.forEach((route, index) => {
+      lines.push(`        ApiEvent${index + 1}:`);
+      lines.push("          Type: Api");
+      lines.push("          Properties:");
+      lines.push("            RestApiId: !Ref DemoApi");
+      lines.push(`            Path: ${route.path}`);
+      lines.push(`            Method: ${route.method}`);
+    });
+  }
 
   lines.push("");
 }

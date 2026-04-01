@@ -49,6 +49,16 @@ Resources:
         - nodejs22.x
       RetentionPolicy: Retain
 
+  DemoUtilsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub demo_utils-${StageName}
+      Description: Lambda layer for demo_utils
+      ContentUri: layers/demo_utils/
+      CompatibleRuntimes:
+        - nodejs22.x
+      RetentionPolicy: Retain
+
   DemoAuthApi:
     Type: AWS::Serverless::Function
     Properties:
@@ -126,6 +136,16 @@ Resources:
             RestApiId: !Ref DemoApi
             Path: /report
             Method: POST
+
+  DemoBackgroundJob:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub demo_background_job_${StageName}
+      CodeUri: generated_lambda_functions/demo_background_job/
+      Handler: index.handler
+      Layers:
+        - !Ref DemoCommonLayer
+        - !Ref DemoUtilsLayer
 
   LocalApiAdapter:
     Type: AWS::Serverless::Function
