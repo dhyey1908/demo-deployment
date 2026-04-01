@@ -89,6 +89,18 @@
           }
         }
       }
+    },
+    "/simple/get": {
+      "get": {
+        "operationId": "getSimple",
+        "x-lambda-name": "demo_simple_api",
+        "x-layer-names": ["demo_common"],
+        "responses": {
+          "200": {
+            "description": "Simple GET response"
+          }
+        }
+      }
     }
   }
 }

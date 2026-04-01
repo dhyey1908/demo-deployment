@@ -142,6 +142,22 @@ Resources:
             Path: /report
             Method: POST
 
+  DemoSimpleApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub demo_simple_api_${StageName}
+      CodeUri: generated_lambda_functions/demo_simple_api/
+      Handler: index.handler
+      Layers:
+        - !Ref DemoCommonLayer
+      Events:
+        ApiEvent1:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /simple/get
+            Method: GET
+
   DemoBackgroundJob:
     Type: AWS::Serverless::Function
     Properties:
