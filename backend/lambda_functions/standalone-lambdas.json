@@ -1,6 +1,6 @@
 [
   {
     "name": "demo_background_job",
-    "layerNames": ["demo_common", "demo_utils"]
+    "layerNames": ["demo_common", "demo_utils", "demo_helpers"]
   }
 ]

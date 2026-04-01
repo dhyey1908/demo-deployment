@@ -49,6 +49,16 @@ Resources:
         - nodejs22.x
       RetentionPolicy: Retain
 
+  DemoHelpersLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub demo_helpers-${StageName}
+      Description: Lambda layer for demo_helpers
+      ContentUri: layers/demo_helpers/
+      CompatibleRuntimes:
+        - nodejs22.x
+      RetentionPolicy: Retain
+
   DemoUtilsLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -168,6 +178,7 @@ Resources:
       Layers:
         - !Ref DemoCommonLayer
         - !Ref DemoUtilsLayer
+        - !Ref DemoHelpersLayer
 
   LocalApiAdapter:
     Type: AWS::Serverless::Function
