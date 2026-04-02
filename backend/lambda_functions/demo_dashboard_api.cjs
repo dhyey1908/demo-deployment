@@ -2,6 +2,7 @@ const { jsonResponse, getRequestMeta } = require("./load-shared.cjs");
 
 exports.handler = async (event) => {
   const { method, path, routeKey } = getRequestMeta(event);
+  console.log("Received request:", { method, path, routeKey });
 
   if (method === "GET" && path === "/dashboard/get_summary") {
     return jsonResponse(200, {
