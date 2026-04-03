@@ -1,0 +1,4 @@
+node_modules
+dist
+backend/.aws-sam
+backend/generated_lambda_functions

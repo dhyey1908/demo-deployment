@@ -1,0 +1,63 @@
+name: Deploy React Frontend To S3
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "vite.config.js"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy-frontend.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: github-actions-frontend-deploy
+
+      - name: Sync dist folder to S3
+        run: aws s3 sync dist "s3://${{ secrets.FRONTEND_S3_BUCKET }}" --delete
+
+      - name: Ensure index.html is not cached
+        run: >
+          aws s3 cp dist/index.html "s3://${{ secrets.FRONTEND_S3_BUCKET }}/index.html"
+          --cache-control "no-cache, no-store, must-revalidate"
+          --content-type "text/html"
+
+      - name: Invalidate CloudFront cache (optional)
+        if: ${{ secrets.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID != '' }}
+        run: >
+          aws cloudfront create-invalidation
+          --distribution-id "${{ secrets.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID }}"
+          --paths "/*"

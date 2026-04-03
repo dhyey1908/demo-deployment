@@ -1,6 +1,9 @@
-# AWS SAM Serverless Demo
+# AWS SAM + React Deployment Demo
 
-This repository is a starter template for a Swagger-driven AWS SAM backend that groups multiple API routes into a smaller number of Lambda functions and deploys through GitHub Actions using AWS OIDC.
+This repository contains:
+- A Swagger-driven AWS SAM backend
+- A simple React frontend (Vite)
+- GitHub Actions CI/CD for backend and frontend using AWS OIDC
 
 ## Folder structure
 
@@ -8,7 +11,13 @@ This repository is a starter template for a Swagger-driven AWS SAM backend that 
 .
 |-- .github/
 |   `-- workflows/
-|       `-- deploy.yml
+|       |-- deploy.yml
+|       `-- deploy-frontend.yml
+|-- src/
+|-- public/
+|-- index.html
+|-- package.json
+|-- vite.config.js
 `-- backend/
     |-- api/
     |-- api_gateway/
@@ -41,7 +50,7 @@ This repository is a starter template for a Swagger-driven AWS SAM backend that 
 7. Create one S3 artifact bucket in AWS for SAM deployments.
 8. Create one GitHub OIDC IAM role in AWS for deployment.
 9. Add the required GitHub Actions secrets.
-10. Push to `main` to deploy the demo stack.
+10. Push to `main` to deploy backend and frontend.
 
 ## Local commands
 
@@ -76,8 +85,11 @@ git push -u origin main
 
 Add these repository secrets:
 
+- `AWS_REGION` (example: `us-east-1`)
 - `AWS_DEPLOY_ROLE_ARN`
 - `SAM_ARTIFACT_BUCKET`
+- `FRONTEND_S3_BUCKET`
+- `FRONTEND_CLOUDFRONT_DISTRIBUTION_ID` (optional, only if using CloudFront)
 
 ## GitHub OIDC trust policy
 
@@ -108,7 +120,7 @@ Replace the placeholders with your AWS account ID, GitHub org/user, and reposito
 
 ## IAM permissions for deploy role
 
-For a demo project, the role should be allowed to deploy CloudFormation stacks, upload artifacts to the SAM bucket, pass IAM roles created by the stack, and manage API Gateway and Lambda resources created by CloudFormation.
+For a demo project, the role should be allowed to deploy CloudFormation stacks, upload artifacts to the SAM bucket, pass IAM roles created by the stack, manage API Gateway and Lambda resources created by CloudFormation, and upload frontend files to S3 (and optionally create CloudFront invalidations).
 
 You can start with a scoped custom policy similar to:
 
@@ -124,6 +136,7 @@ You can start with a scoped custom policy similar to:
         "apigateway:*",
         "logs:*",
         "s3:*",
+        "cloudfront:CreateInvalidation",
         "iam:PassRole"
       ],
       "Resource": "*"
@@ -137,8 +150,9 @@ Tighten this before using it in a real environment.
 ## Deployment flow
 
 - Push to `main`
-- GitHub Actions generates `template.yaml`, builds with SAM, and deploys the `serverless-demo` stack
-- The workflow uses `StageName=stag` and `EnableLocalAdapter=false`
+- Backend workflow (`deploy.yml`) generates `template.yaml`, builds SAM, and deploys the `serverless-demo` stack
+- Frontend workflow (`deploy-frontend.yml`) runs `npm run build` and syncs `dist/` to `FRONTEND_S3_BUCKET`
+- If `FRONTEND_CLOUDFRONT_DISTRIBUTION_ID` is provided, CloudFront cache is invalidated automatically
 
 ## Notes
 
