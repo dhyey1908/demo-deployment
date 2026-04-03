@@ -20,6 +20,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: "Demo deployment env"
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
     steps:
@@ -42,7 +43,7 @@ jobs:
       - name: Configure AWS credentials with OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           role-session-name: github-actions-frontend-deploy
 
