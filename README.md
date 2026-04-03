@@ -89,7 +89,6 @@ Add these repository secrets:
 - `AWS_DEPLOY_ROLE_ARN`
 - `SAM_ARTIFACT_BUCKET`
 - `FRONTEND_S3_BUCKET`
-- `FRONTEND_CLOUDFRONT_DISTRIBUTION_ID` (optional, only if using CloudFront)
 
 ## GitHub OIDC trust policy
 
@@ -120,7 +119,7 @@ Replace the placeholders with your AWS account ID, GitHub org/user, and reposito
 
 ## IAM permissions for deploy role
 
-For a demo project, the role should be allowed to deploy CloudFormation stacks, upload artifacts to the SAM bucket, pass IAM roles created by the stack, manage API Gateway and Lambda resources created by CloudFormation, and upload frontend files to S3 (and optionally create CloudFront invalidations).
+For a demo project, the role should be allowed to deploy CloudFormation stacks, upload artifacts to the SAM bucket, pass IAM roles created by the stack, manage API Gateway and Lambda resources created by CloudFormation, and upload frontend files to S3.
 
 You can start with a scoped custom policy similar to:
 
@@ -136,7 +135,6 @@ You can start with a scoped custom policy similar to:
         "apigateway:*",
         "logs:*",
         "s3:*",
-        "cloudfront:CreateInvalidation",
         "iam:PassRole"
       ],
       "Resource": "*"
@@ -152,7 +150,6 @@ Tighten this before using it in a real environment.
 - Push to `main`
 - Backend workflow (`deploy.yml`) generates `template.yaml`, builds SAM, and deploys the `serverless-demo` stack
 - Frontend workflow (`deploy-frontend.yml`) runs `npm run build` and syncs `dist/` to `FRONTEND_S3_BUCKET`
-- If `FRONTEND_CLOUDFRONT_DISTRIBUTION_ID` is provided, CloudFront cache is invalidated automatically
 
 ## Notes
 

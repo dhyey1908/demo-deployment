@@ -54,10 +54,3 @@ jobs:
           aws s3 cp dist/index.html "s3://${{ secrets.FRONTEND_S3_BUCKET }}/index.html"
           --cache-control "no-cache, no-store, must-revalidate"
           --content-type "text/html"
-
-      - name: Invalidate CloudFront cache (optional)
-        if: ${{ secrets.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID != '' }}
-        run: >
-          aws cloudfront create-invalidation
-          --distribution-id "${{ secrets.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID }}"
-          --paths "/*"
