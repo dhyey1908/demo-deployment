@@ -4,7 +4,8 @@ const links = [
   { to: '/', label: 'Home' },
   { to: '/about', label: 'About' },
   { to: '/services', label: 'Services' },
-  { to: '/contact', label: 'Contact' }
+  { to: '/contact', label: 'Contact' },
+  { to: '/blog', label: 'Blog' }
 ];
 
 export default function Layout({ children }) {
